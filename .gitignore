@@ -1,0 +1,47 @@
+# Node modules
+node_modules/
+
+# Compilação do TypeScript
+dist/
+build/
+out/
+artifacts/
+cache/
+typechain-types/
+
+# Arquivos temporários do Hardhat
+coverage/
+coverage.json
+.env
+.env.local
+.env.*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# MacOS / sistema
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+
+# Outros arquivos que Hardhat pode gerar
+hh-cache/
+deployments/
+deployments.json
+broadcast/
+
+# Test coverage
+lcov-report/
+lcov.info
+
+# Arquivos do sistema Git
+*.orig
+
+# Arquivos de testnet/private key locais
+privateKey.txt
