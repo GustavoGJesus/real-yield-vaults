@@ -21,9 +21,14 @@ contract MockStrategy is IStrategy, Ownable(msg.sender) {
     /// @notice Deposit tokens into the strategy
     function deposit(uint256 amount) external override {
         require(amount > 0, "ZERO_AMOUNT");
-
-        token.transferFrom(msg.sender, address(this), amount);
-        total += amount;
+        
+        // For testing: if owner calls, just update the total (assume tokens already transferred)
+        if (msg.sender == owner()) {
+            total += amount;
+        } else {
+            token.transferFrom(msg.sender, address(this), amount);
+            total += amount;
+        }
     }
 
     /// @notice Withdraw tokens from the strategy

@@ -5,11 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./interfaces/IStrategy.sol";
 
 /**
  * @title RealYieldVault
- * @dev ERC4626-compliant vault that accepts USDC and mints shares.
- * External strategies can be plugged in later to generate real yield.
+ * @dev ERC4626-compliant vault with strategy integration
  */
 contract RealYieldVault is ERC4626, Ownable, ReentrancyGuard, Pausable {
     error ZeroAddress();
@@ -17,6 +17,10 @@ contract RealYieldVault is ERC4626, Ownable, ReentrancyGuard, Pausable {
 
     event EmergencyPause(address indexed triggeredBy);
     event EmergencyUnpause(address indexed triggeredBy);
+    event StrategySet(address indexed newStrategy);
+    event Harvested(uint256 amount);
+
+    IStrategy public strategy;
 
     constructor(address asset_)
         ERC4626(IERC20(asset_))
@@ -26,9 +30,10 @@ contract RealYieldVault is ERC4626, Ownable, ReentrancyGuard, Pausable {
         if (asset_ == address(0)) revert ZeroAddress();
     }
 
-    /**
-     * @dev Override deposit to include additional security checks
-     */
+    // -------------------------
+    // Vault Logic (unchanged)
+    // -------------------------
+
     function deposit(uint256 assets, address receiver)
         public
         override
@@ -40,9 +45,6 @@ contract RealYieldVault is ERC4626, Ownable, ReentrancyGuard, Pausable {
         return super.deposit(assets, receiver);
     }
 
-    /**
-     * @dev Override withdraw to include additional security checks
-     */
     function withdraw(uint256 assets, address receiver, address owner_)
         public
         override
@@ -54,19 +56,34 @@ contract RealYieldVault is ERC4626, Ownable, ReentrancyGuard, Pausable {
         return super.withdraw(assets, receiver, owner_);
     }
 
-    /**
-     * @dev Emergency pause functionality (only callable by the owner)
-     */
     function pause() external onlyOwner {
         _pause();
         emit EmergencyPause(msg.sender);
     }
 
-    /**
-     * @dev Resume vault operations after an emergency pause (only callable by the owner)
-     */
     function unpause() external onlyOwner {
         _unpause();
         emit EmergencyUnpause(msg.sender);
+    }
+
+    // -------------------------
+    // Strategy Logic
+    // -------------------------
+
+    function setStrategy(address newStrategy) external onlyOwner {
+        if (newStrategy == address(0)) revert ZeroAddress();
+        strategy = IStrategy(newStrategy);
+        emit StrategySet(newStrategy);
+    }
+
+    function harvest() external nonReentrant whenNotPaused returns (uint256) {
+        require(address(strategy) != address(0), "Strategy not set");
+
+        uint256 yield = strategy.harvest();
+        // The strategy's harvest function already transfers the yield to this vault
+        // No need for another transferFrom
+
+        emit Harvested(yield);
+        return yield;
     }
 }
