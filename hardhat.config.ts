@@ -29,6 +29,14 @@ const config: HardhatUserConfig = {
         }
       } : {}),
       chainId: 1337,
+      gas: "auto",
+      gasPrice: "auto",
+      gasMultiplier: 2
+    },
+    localhost: {
+      gas: "auto",
+      gasPrice: "auto",
+      gasMultiplier: 2
     },
     mainnet: {
       url: process.env.MAINNET_RPC_URL || `https://eth-mainnet.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
